@@ -45,6 +45,10 @@ Your compilation environment should support `C++ 17`.
   # BUILD opencv with extra contrib modules from source code:
     - https://github.com/opencv/opencv
     - https://github.com/opencv/opencv_contrib
+  
+  # python modules for example/demo.py
+  $ pip install numpy==1.26.0
+  $ pip install opencv-python
   ```
 
 - [method 2] Under conda env
@@ -54,11 +58,6 @@ Your compilation environment should support `C++ 17`.
   $ conda install cmake eigen glfw glew libopencv
   ```
 
-- Other dependencies for `demo.py`
-  ```
-  pip install numpy==1.26.0
-  pip install opencv-python
-  ```
 
 #### Package Installation
 ```
