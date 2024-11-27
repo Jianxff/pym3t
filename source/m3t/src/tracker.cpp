@@ -274,7 +274,6 @@ void Tracker::RunTrackerOneStep() {
   if (!set_up_) {
     throw std::runtime_error("Tracker not set up");
   }
-
   if (!UpdateCameras(0)) {
     throw std::runtime_error("Failed to update cameras");    
   } 

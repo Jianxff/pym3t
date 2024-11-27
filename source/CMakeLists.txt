@@ -17,11 +17,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # =============================================================================
 if(DEFINED ENV{CONDA_PREFIX})
     message(STATUS "Conda environment detected: $ENV{CONDA_PREFIX}")
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{CONDA_PREFIX}")
-    list(APPEND CMAKE_LIBRARY_PATH "$ENV{CONDA_PREFIX}/lib")
-    list(APPEND CMAKE_INSTALL_RPATH "$ENV{CONDA_PREFIX}/lib")
+    set(CMAKE_SYSTEM_PREFIX_PATH "$ENV{CONDA_PREFIX}/x86_64-conda-linux-gnu/sysroot/usr")
+    set(CMAKE_SYSTEM_LIBRARY_PATH "$ENV{CONDA_PREFIX}/x86_64-conda-linux-gnu/sysroot/usr/lib")
+    set(CMAKE_PREFIX_PATH "$ENV{CONDA_PREFIX}")
+    set(CMAKE_LIBRARY_PATH "$ENV{CONDA_PREFIX}/lib")
+    set(CMAKE_INSTALL_RPATH "$ENV{CONDA_PREFIX}/lib")
 endif()
-
 
 # Python
 # =============================================================================

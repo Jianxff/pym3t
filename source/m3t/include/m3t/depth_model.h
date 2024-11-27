@@ -88,7 +88,7 @@ class DepthModel : public Model {
   // Constructors and setup methods
   DepthModel(const std::string &name, const std::shared_ptr<Body> &body_ptr,
              const std::filesystem::path &model_path,
-             float sphere_radius = 0.8f, int n_divides = 4, int n_points = 200,
+             float sphere_radius = 0.8f, int n_divides = 4, int n_points = 500,
              float max_radius_depth_offset = 0.05f,
              float stride_depth_offset = 0.002f, bool use_random_seed = false,
              int image_size = 2000);

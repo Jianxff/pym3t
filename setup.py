@@ -38,6 +38,7 @@ class BuildExt(build_ext):
 
 setup(
     name='pym3t',
+    version='24.11.27',
     ext_modules=[
         CMakeExtension("source")
     ],

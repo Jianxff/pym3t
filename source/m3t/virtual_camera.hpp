@@ -28,12 +28,16 @@ public:
             printf("[warn] got empty image\n");
             return false;
         }
-        image_list_.push(image.clone());
+        image_list_.emplace(image.clone());
+        return true;
     }
 
     // image update
     bool UpdateImage(bool synchronized = true) override {
-        if (image_list_.empty()) return false;
+        if (image_list_.empty()) {
+            if (image_.empty()) return false;
+            return true;
+        }
         
         image_ = image_list_.front();
         image_list_.pop();
@@ -61,8 +65,9 @@ public:
      : DepthCamera(name) 
     {
         intrinsics_ = intrinsics;
-        depth_scale_ = depth_scale;
+        depth_scale_ = 0.001f; // will be calculate in 'mm' while tracking
         force_realtime_ = force_realtime;
+        convert_to_mm_ushort_ = depth_scale * 1000.0f;
     }
 
     // setup method
@@ -77,12 +82,18 @@ public:
             printf("[warn] got empty image\n");
             return false;
         }
-        image_list_.push(image.clone());
+        cv::Mat depth_meter = image.clone() * convert_to_mm_ushort_;
+        depth_meter.convertTo(depth_meter, CV_16U);
+        image_list_.emplace(depth_meter);
+        return true;
     }
 
     // image update
     bool UpdateImage(bool synchronized = true) override {
-        if (image_list_.empty()) return false;
+        if (image_list_.empty()) {
+            if (image_.empty()) return false;
+            return true;
+        }
         
         image_ = image_list_.front();
         image_list_.pop();
@@ -99,6 +110,7 @@ public:
 private:
     std::queue<cv::Mat> image_list_;
     bool force_realtime_ = false;
+    float convert_to_mm_ushort_ = 1.0f;
 }; // class VirtualDepthCamera
 
 

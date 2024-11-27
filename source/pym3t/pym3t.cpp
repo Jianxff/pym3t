@@ -11,56 +11,49 @@ ModelWrapper::ModelWrapper(
 ) : Model(name, geometry_path, region_meta_path, depth_meta_path, unit_in_meter, shperer_radius) {}
 
 
-RGBTrackerWrapper::RGBTrackerWrapper(
+MultiModalTrackerWrapper::MultiModalTrackerWrapper(
     const int image_width,
     const int image_height,
     const Eigen::Matrix3f &K,
-    const bool use_texture
-) : Tracker(image_width, image_height, K, false, 0.0f, use_texture) {}
+    const bool use_region,
+    const bool use_depth,
+    const bool use_texture,
+    const float depth_scale
+) : Tracker(image_width, image_height, K, use_region, use_depth, depth_scale, use_texture) {}
 
-void RGBTrackerWrapper::step_forward(const py::array_t<uint8_t> &color_image) {
+
+void MultiModalTrackerWrapper::step_wrapper(const py::array_t<uint8_t> &color_image, const py::array_t<float> &depth_image) {
     // convert to cv::Mat
-    if (color_image.ndim() != 3) {
+    if ((use_region_ || use_texture_) && color_image.ndim() != 3) {
         throw std::runtime_error("RGB color image must have 3 dimensions");
     }
-    // get buffer
-    py::buffer_info buf = color_image.request();
-    cv::Mat image(buf.shape[0], buf.shape[1], CV_8UC3, (uint8_t *)buf.ptr);
-    // step
-    step(image);
-}
-
-
-
-RGBDTrackerWrapper::RGBDTrackerWrapper(
-    const int image_width,
-    const int image_height,
-    const Eigen::Matrix3f &K,
-    const float depth_scale,
-    const bool use_texture
-) : Tracker(image_width, image_height, K, true, depth_scale, use_texture) {}
-
-
-void RGBDTrackerWrapper::step_forward(const py::array_t<uint8_t> &color_image, const py::array_t<float> &depth_image) {
-    // convert to cv::Mat
-    if (color_image.ndim() != 3) {
-        throw std::runtime_error("RGB color image must have 3 dimensions");
-    }
-    if (depth_image.ndim() != 2) {
+    if (use_depth_ && depth_image.ndim() != 2) {
         throw std::runtime_error("Depth image must have 2 dimensions");
     }
     // get buffer
-    py::buffer_info buf_color = color_image.request();
-    py::buffer_info buf_depth = depth_image.request();
-    cv::Mat image(buf_color.shape[0], buf_color.shape[1], CV_8UC3, (uint8_t *)buf_color.ptr);
-    cv::Mat depth(buf_depth.shape[0], buf_depth.shape[1], CV_32FC1, (float *)buf_depth.ptr);
+    cv::Mat image = cv::Mat(), depth = cv::Mat();
+    if (use_region_ || use_texture_) {
+        py::buffer_info buf_color = color_image.request();
+        image = cv::Mat(buf_color.shape[0], buf_color.shape[1], CV_8UC3, (uint8_t *)buf_color.ptr);
+        cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
+    }
+    
+    if (use_depth_) {
+        py::buffer_info buf_depth = depth_image.request();
+        depth = cv::Mat(buf_depth.shape[0], buf_depth.shape[1], CV_32FC1, (float *)buf_depth.ptr);
+    }
     // step
     step(image, depth);
 }
 
 
+void MultiModalTrackerWrapper::add_model_wrapper(const std::shared_ptr<ModelWrapper> &model) {
+    add_model(model);
+}
 
-ViewerWrapper::ViewerWrapper(const std::shared_ptr<Tracker> &tracker) : Viewer(tracker) {}
+
+ViewerWrapper::ViewerWrapper(const std::shared_ptr<MultiModalTrackerWrapper> &tracker) : Viewer(tracker) {}
+
 
 py::array_t<uint8_t> ViewerWrapper::convert_to_numpy(const cv::Mat &image) {
     // convert to numpy array
@@ -72,15 +65,17 @@ py::array_t<uint8_t> ViewerWrapper::convert_to_numpy(const cv::Mat &image) {
     return image_np;
 }
 
-py::array_t<uint8_t> ViewerWrapper::view_color() {
+py::array_t<uint8_t> ViewerWrapper::view_color(const bool rgb_format) {
     // render color image
     cv::Mat image = render_image();
+    if (rgb_format) cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
     return convert_to_numpy(image);
 }
 
-py::array_t<uint8_t> ViewerWrapper::view_depth() {
+py::array_t<uint8_t> ViewerWrapper::view_depth(const bool rgb_format) {
     // render depth image
     cv::Mat image = render_depth();
+    if (rgb_format) cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
     return convert_to_numpy(image);
 }
 
@@ -89,8 +84,6 @@ py::array_t<uint8_t> ViewerWrapper::view_depth() {
 
 PYBIND11_MODULE(pym3t, m) {
     m.doc() = "Python binding for M3T";
-    m.attr("__version__") = "241120";
-
     py::class_<ModelWrapper, std::shared_ptr<ModelWrapper>>(m, "Model")
         .def(py::init<
             const std::string&, 
@@ -117,46 +110,36 @@ PYBIND11_MODULE(pym3t, m) {
         .def_property_readonly("pose", &ModelWrapper::get_pose_opencv, "get pose under OpenCV coordinate")
         .def_property_readonly("pose_cv", &ModelWrapper::get_pose_opencv, "get pose under OpenCV coordinate")
         .def_property_readonly("pose_gl", &ModelWrapper::get_pose_opengl, "get pose under OpenGL coordinate");
-
-    py::class_<RGBTrackerWrapper, std::shared_ptr<RGBTrackerWrapper>>(m, "RGBTracker")
+    
+    py::class_<MultiModalTrackerWrapper, std::shared_ptr<MultiModalTrackerWrapper>>(m, "Tracker")
         .def(py::init<
             const int, 
             const int, 
             const Eigen::Matrix3f&, 
-            const bool>(),
+            const bool, 
+            const bool, 
+            const bool, 
+            const float>(),
             py::arg("image_width"),
             py::arg("image_height"),
             py::arg("K") = Eigen::Matrix3f::Zero(),
-            py::arg("use_texture") = false
+            py::arg("use_region") = true,
+            py::arg("use_depth") = false,
+            py::arg("use_texture") = false,
+            py::arg("depth_scale") = 1.0f
         )
-        .def("add_model", &RGBTrackerWrapper::add_model, py::arg("model"), "add model")
-        .def("step", &RGBTrackerWrapper::step_forward, 
-            py::arg("image"), "step with RGB color image")
-        .def_property_readonly("K_", [](const RGBTrackerWrapper &t) { return t.K_; }, "camera intrinsic matrix")
-        .def_property_readonly("models_", [](const RGBTrackerWrapper &t) {return t.models_;}, "get models dict");    
+        .def("add_model", &MultiModalTrackerWrapper::add_model_wrapper, py::arg("model"), "add model")
+        .def("step", &MultiModalTrackerWrapper::step_wrapper, 
+            py::arg("image") = py::array_t<uint8_t>(),
+            py::arg("depth") = py::array_t<float>(), 
+            "step with RGB color and depth images")
+        .def_property_readonly("K_", [](const MultiModalTrackerWrapper &t) { return t.K_; }, "camera intrinsic matrix")
+        .def_property_readonly("models_", [](const MultiModalTrackerWrapper &t) {return t.models_;}, "get models dict");
 
-    py::class_<RGBDTrackerWrapper, std::shared_ptr<RGBDTrackerWrapper>>(m, "RGBDTracker")
-        .def(py::init<
-            const int, 
-            const int, 
-            const Eigen::Matrix3f&, 
-            const float, 
-            const bool>(),
-            py::arg("image_width"),
-            py::arg("image_height"),
-            py::arg("K") = Eigen::Matrix3f::Zero(),
-            py::arg("depth_scale") = 1.0f,
-            py::arg("use_texture") = false
-        )
-        .def("add_model", &RGBDTrackerWrapper::add_model, py::arg("model"), "add model")
-        .def("step", &RGBDTrackerWrapper::step_forward, py::arg("image"), 
-            py::arg("depth"), "step with RGB color and depth images")
-        .def_property_readonly("K_", [](const RGBTrackerWrapper &t) { return t.K_; }, "camera intrinsic matrix")
-        .def_property_readonly("models_", [](const RGBTrackerWrapper &t) {return t.models_;}, "get models dict");
 
     py::class_<ViewerWrapper, std::shared_ptr<ViewerWrapper>>(m, "Viewer")
-        .def(py::init<std::shared_ptr<Tracker>>(), py::arg("tracker"), "initialize viewer")
-        .def("view_color", &ViewerWrapper::view_color, "render color image")
-        .def("view_depth", &ViewerWrapper::view_depth, "render depth image");
+        .def(py::init<std::shared_ptr<MultiModalTrackerWrapper>>(), py::arg("tracker"), "initialize viewer")
+        .def("view_color", &ViewerWrapper::view_color, py::arg("rgb_format") = true, "render color image")
+        .def("view_depth", &ViewerWrapper::view_depth, py::arg("rgb_format") = true, "render depth image");
 
 };

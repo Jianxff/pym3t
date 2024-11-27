@@ -299,7 +299,7 @@ class DepthModality : public Modality {
   std::shared_ptr<FocusedSilhouetteRenderer> silhouette_renderer_ptr_ = nullptr;
 
   // Parameters for general distribution
-  int n_points_max_ = 200;
+  int n_points_max_ = 500;
   bool use_adaptive_coverage_ = false;
   bool use_depth_scaling_ = false;
   float reference_surface_area_ = 0.0f;

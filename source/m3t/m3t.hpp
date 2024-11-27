@@ -68,6 +68,7 @@ public:
         const int image_width,
         const int image_height,
         const Eigen::Matrix3f& K = Eigen::Matrix3f::Zero(),
+        const bool use_region = true,
         const bool use_depth = true,
         const float depth_scale = 1.0f,
         const bool use_texture = false
@@ -82,8 +83,9 @@ public:
     int image_width_;
     int image_height_;
     Eigen::Matrix3f K_;
-    bool use_depth_ = true;
-    bool use_texture_ = false;
+    const bool use_region_ = true;
+    const bool use_depth_ = true;
+    const bool use_texture_ = false;
 
     // model map
     std::unordered_map<std::string, std::shared_ptr<Model>> models_;
@@ -109,6 +111,7 @@ public:
     cv::Mat render_image();
     cv::Mat render_depth();
 
+    const bool use_color_ = false;
     const bool use_depth_ = false;
     std::shared_ptr<Tracker> tracker_;
     std::shared_ptr<m3t::RendererGeometry> renderer_geometry_ptr_ = nullptr;
