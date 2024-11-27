@@ -1,6 +1,6 @@
 # standard library
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple
+from typing import List, Dict, Optional, Tuple
 # third party
 import numpy as np
 import cv2

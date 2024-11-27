@@ -64,21 +64,21 @@ if(HAS_MTUNE)
 endif()
 
 
-# # Release settings
-# check_cxx_compiler_flag(-Ob3 HAS_OB3)
-# check_cxx_compiler_flag(-O3 HAS_O3)
-# check_cxx_compiler_flag(-Ob2 HAS_OB2)
-# check_cxx_compiler_flag(-O2 HAS_O2)
-# if (HAS_OB3)
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ob3")
-# elseif (HAS_O3)
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-# elseif(HAS_OB2)
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ob2")
-# elseif(HAS_O2)
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
-# endif()
-# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
+# Release settings
+check_cxx_compiler_flag(-Ob3 HAS_OB3)
+check_cxx_compiler_flag(-O3 HAS_O3)
+check_cxx_compiler_flag(-Ob2 HAS_OB2)
+check_cxx_compiler_flag(-O2 HAS_O2)
+if (HAS_OB3)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ob3")
+elseif (HAS_O3)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+elseif(HAS_OB2)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ob2")
+elseif(HAS_O2)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+endif()
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
 
 # PyBind

@@ -25,7 +25,7 @@ class BuildExt(build_ext):
 
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + str(ext_dir.parent),
-            "-DCMAKE_BUILD_TYPE=Debug"
+            "-DCMAKE_BUILD_TYPE=Release"
         ]
 
         build_args = ["-j6"]

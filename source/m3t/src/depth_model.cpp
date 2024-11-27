@@ -180,10 +180,7 @@ bool DepthModel::GenerateModel() {
 #pragma omp for
     for (int i = 0; i < int(views_.size()); ++i) {
       if (cancel) continue;
-      std::stringstream msg;
-      msg << "Generate depth model " << name_ << ": view " << count++ << " of "
-          << views_.size() << std::endl;
-      std::cout << msg.str();
+      printf("Generate depth model %s: view %d of %d\n", name_.c_str(), count++, int(views_.size()));
 
       // Render and fetch images
       RenderAndFetchNormalImage(main_renderer_ptr, camera2body_poses[i], true);
