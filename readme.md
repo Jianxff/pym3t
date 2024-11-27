@@ -68,7 +68,13 @@ pip install .
 
 
 ## Demo
-*Comming soon*
+*The demo data is from `SMu1` sequence of [HO3D_v3](https://github.com/shreyashampali/ho3d)*
+
+```
+cd ${repo_root}/example
+python demo.py
+```
+
 
 
 ## Interface
